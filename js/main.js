@@ -6,3 +6,5 @@
 // create a function for HAL to open the chat with "Good morning, Dave"
 
 // invoke the opening message
+
+// add code
