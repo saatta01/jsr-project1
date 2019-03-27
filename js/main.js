@@ -10,11 +10,6 @@ const xhrCountryCoordinates = new XMLHttpRequest();
 const xhrBookMapping = new XMLHttpRequest();
 
 
-
-//Start scroll of chatbox at bottom
-chatBoxDiv.scrollTop = chatBoxDiv.scrollHeight;
-
-
 //Start with opening message from Robot
 (function beginOpeningMessage() {
   setTimeout(function() {
@@ -87,6 +82,8 @@ function createRobotMessage(robotMessage) {
   let newRobotChat = document.createElement('div');
   newRobotChat.innerHTML = `<div class="chat-message robot"><div class="user-photo"><img src="https://robohash.org/default"></div><p class="chat-text">${robotMessage}</p></div>`;
   chatBoxDiv.appendChild(newRobotChat);
+  //Start scroll of chatbox at bottom
+  chatBoxDiv.scrollTop = chatBoxDiv.scrollHeight;
 }
 
 //create user chat template. Should accept the submitted user text as an argument
@@ -95,6 +92,8 @@ function createUserMessage(userMessage) {
   let newUserChat = document.createElement('div');
   newUserChat.innerHTML = `<div class="chat-message self"><div class="user-photo"><img src="https://robohash.org/self?set=set4"></div><p class="chat-text">${userMessage}</p></div>`;
   chatBoxDiv.appendChild(newUserChat);
+  //Start scroll of chatbox at bottom
+  chatBoxDiv.scrollTop = chatBoxDiv.scrollHeight;
 }
 
 //Connect to countries api
