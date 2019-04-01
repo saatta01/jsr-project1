@@ -4,18 +4,78 @@ const chatForm = document.querySelector('#chatForm');
 const chatBoxDiv = document.querySelector('#chat-box');
 const userInput = document.querySelector('#chatInput');
 let allPs= document.querySelectorAll('P'); // THIS DOESN'T CAPTURE DOM ELEMENTS AS THEY ARE ADDED DYNAMICALLY
-let userResponseNumber = 0;
+let counter = 0;
 let userCountry = "";
+let currentBookName = "";
 const xhrCountryCoordinates = new XMLHttpRequest();
 const xhrBookMapping = new XMLHttpRequest();
+const affirmatives = ['yes', 'yeah', 'heck yes', 'hell yeah', 'yea', 'fine', 'okay', 'aye', 'affirmative', 'yep'];
+const negatives = ['no', 'hell naw', 'heck no', 'nah', 'nope'];
 
 
 //Start with opening message from Robot
-(function beginOpeningMessage() {
+(function OpeningMessage() {
   setTimeout(function() {
     createRobotMessage("Hello! I'm Hal 9000, would you like a regional book recommendation?");
   }, 800);
 })();
+
+function whichCountryQuestion(reply) {
+  reply = reply.toLowerCase();
+  if (affirmatives.indexOf(reply) > -1) {
+    setTimeout(function() {
+      createRobotMessage("What country would you like a book from?");
+    }, 800);
+  }
+  else if(negatives.indexOf(reply) > -1) {
+    setTimeout(function() {
+      createRobotMessage("How rude...");
+    }, 800);
+  }
+  else {
+    setTimeout(function() {
+      createRobotMessage("Sorry, I didn't catch that. Would you like a regional book recommendation?");
+    }, 800);
+    counter = -1;
+  }
+}
+
+function provideBookRec(currentBookName) {
+  if (currentBookName !== "") {
+    setTimeout(function() {
+    createRobotMessage(`Here's a recommendation: ${currentBookName}. Would you like another?`);
+    }, 800);
+  }
+  else {
+    setTimeout(function() {
+    createRobotMessage(`Sorry, I couldn't find anything. Let's try again!`);
+    }, 800);
+    counter = 1;
+    whichCountryQuestion('yes');
+  }
+}
+
+function wouldYouLikeAnother(reply) {
+  if (affirmatives.indexOf(reply) > -1) {
+    counter = 1;
+    makeCountryConnection(userCountry);
+  }
+  else if (reply.includes("another country") || reply.includes("different country")) {
+    counter = 0;
+    whichCountryQuestion('yes');
+  }
+  else if (negatives.indexOf(reply) > -1) {
+    setTimeout(function() {
+    createRobotMessage("Good, I'm all tuckered out from providing book suggestions. Catch ya later!");
+    }, 800);
+  }
+  else {
+    setTimeout(function() {
+      createRobotMessage("Sorry, I didn't catch that. Would you like another rec?");
+    }, 800);
+    counter = 1;
+  }
+}
 
 
 //message 1 : Hi, would you like a regional book recommendation
@@ -27,54 +87,36 @@ const xhrBookMapping = new XMLHttpRequest();
 
 //listen for userInput
 chatForm.addEventListener('submit', function(){
-  event.preventDefault();
-  if(userInput.value !== " ") {
-    //add 1 to userResponseNumber
-    userResponseNumber++;
-    // add user input to chatBox as a user Message
-    createUserMessage(userInput.value);
-    //save input to variable and clear chat input. Use trim to remove wonky spaces added/defaulting.
-    let userSubmission = userInput.value.toLowerCase().trim();
-    userInput.value = " ";
-    //disable user from submitting input until Robot has responded
+    event.preventDefault();
+    console.log(counter);
     userInput.disabled = true;
-    //check userResponseNumber to determine what kind of response we're expecting, and what robot response should be outputted
-    if (userResponseNumber === 1) {
-      if (userSubmission === 'yes') {
-        setTimeout(function() {
-          createRobotMessage("What country would you like a book from?");
-        }, 800);
-        console.log(userResponseNumber);
-      }
-      else if(userSubmission === 'no') {
-        console.log("THEY SAID NO");
-      }
-      else {
-        createRobotMessage("Sorry, I didn't catch that. Would you like a regional book recommendation?");
-        userResponseNumber--;
-      }
-    }
-    else if (userResponseNumber === 2) {
-      makeCountryConnection(userSubmission);
-      userCountry = userSubmission;
-      // createRobotMessage(`Here's a recommendation from ${userSubmission}: ${bookRec}`); STILL FEEL LIKE THIS SHOULD BE HANDLED HERE
-    }
-    else if (userResponseNumber === 3) {
-      if (userSubmission === 'yes') {
-        makeCountryConnection(userCountry);
-        userResponseNumber--;
-      }
-      else if(userSubmission === 'no') {
-        console.log("they said no!");
-      }
-      else {
-        console.log("Nothing to see here");
-      }
-    }
+    createUserMessage(userInput.value);
+    askQuestion(userInput.value);
+    userInput.value = "";
     //reenable user input submittion
     userInput.disabled = false;
-  }
+    counter++;
 });
+
+//switch between messages using counter
+function askQuestion(userMessage) {
+  userMessage = userMessage.toLowerCase();
+  switch(counter) {
+    case 0:
+      whichCountryQuestion(userMessage);
+      break;
+    case 1:
+      console.log(userMessage);
+      userCountry = userMessage;
+      makeCountryConnection(userMessage);
+      break;
+    case 2:
+      wouldYouLikeAnother(userMessage);
+      break;
+    default:
+      console.log('something is off');
+  }
+}
 
 //create robot chat template. Should accept the appropriate robot text as an argument
 function createRobotMessage(robotMessage) {
@@ -115,11 +157,9 @@ function makeBookConnection(lat,long) {
 function handleCountryLoad() {
   const cleanData = JSON.parse(xhrCountryCoordinates.responseText);
   if(xhrCountryCoordinates.status >= 400 && xhrCountryCoordinates.status <500) {
-    setTimeout(function() {
-    createRobotMessage(`Sorry, I didn't catch that. What country would you like a book recommendation from?`);
-    }, 800);
-    userResponseNumber--;
-    console.log(userResponseNumber);
+    console.log("nothing returned from country lat/long api");
+    currentBookName = "";
+    provideBookRec(currentBookName);
   }
   //**********pass the lat and long values to the other api************
   let lat = cleanData[0].latlng[0];
@@ -130,33 +170,22 @@ function handleCountryLoad() {
 function handleBookLoad() {
   const cleanData = JSON.parse(xhrBookMapping.responseText);
   if(xhrBookMapping.status >= 400 && xhrBookMapping.status <500) {
-    setTimeout(function() {
-    createRobotMessage(`Sorry, no books were written in this region.`);
-    }, 800);
-    userResponseNumber--;
-    console.log(userResponseNumber);
+    console.log("no books written in this region");
   }
-
-  let currentBookName = cleanData[randomNumGen(cleanData.length)].title;
-  setTimeout(function() {
-  createRobotMessage(`Here's a recommendation: ${currentBookName}. Would you like another?`);
-  }, 800);
+  currentBookName = cleanData[randomNumGen(cleanData.length)-1].title;
+  provideBookRec(currentBookName);
 }
 
 function handleCountryError() {
-  setTimeout(function() {
-  createRobotMessage(`Sorry, I didn't catch that. What country would you like a book recommendation from?`);
-  }, 800);
-  userResponseNumber--;
-  console.log(userResponseNumber);
+  console.log("Something happened when connecting to the lat/long api");
+  currentBookName = "";
+  provideBookRec(currentBookName);
 }
 
 function handleBookError() {
-  setTimeout(function() {
-  createRobotMessage(`Sorry, no books were written in this region.`);
-  }, 800);
-  userResponseNumber--;
-  console.log(userResponseNumber);
+  console.log("Something happened when connecting to the book api");
+  currentBookName = "";
+  provideBookRec(currentBookName);
 }
 
 function randomNumGen(numberOfBooks) {

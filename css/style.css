@@ -118,6 +118,21 @@ body {
   justify-content: center;
 }
 
+svg {
+  width: 5%;
+  height: 100%;
+  display:inline-block;
+}
+
+svg polyline,
+svg line,
+svg path {
+  fill: none;
+  stroke: #7889b9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 #chatbot {
   margin: 20px;
   width: 50%;
@@ -152,10 +167,11 @@ body {
 
 .chat-input #chatInput {
   padding: 10px;
-  width: 100%;
+  width: 94%;
   height: 100%;
   background-color: transparent;
   border: none;
+  display:inline-block;
 }
 
 .chat-message {
@@ -198,7 +214,7 @@ body {
 #chat-box {
   background-color: #F7F5F7;
   flex: 1;
-  height: 65vh;
+  height: 68vh;
   padding: 10px 20px;
   overflow-y: scroll;
   overflow-x: hidden;
